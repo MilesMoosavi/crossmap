@@ -1,0 +1,7 @@
+dotenv
+qiskit
+qiskit_optimization
+qiskit_aer
+qiskit_ionq
+numpy
+scipy
