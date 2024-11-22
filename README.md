@@ -4,18 +4,25 @@
 ## Table of Contents
 * [Table of Contents](#table-of-contents)
 * [Introduction](#introduction)
-* [Objectives](#objectives)
+    * [Motivation](#motivation)
+    * [Objectives](#objectives)
 * [Methods](#methods)
-* [Usage](#usage)
+  * [Algorithm](#algorithm)
+  * [Circuit](#circuit)
+* [Dataset and Preprocessing](#dataset-and-preprocessing) 
+* [Results](#results) 
+* [Conclusion](#conclusion)
+    * [Future Work](#future-work)
 * [Authors](#authors)
 * [Works Cited](#works-cited)
 * [License](#license)
 
 
 ## Introduction
+### Motivation
 The University of Maryland has a lot of resources that it seeks to ensure every student has easy access to, ranging from facilities like Wi-fi to basic safety measures such as streetlights. However, ensuring these resources are properly distributed amongst campus can grow to be expensive considering the University’s 1,339-acre estate. This optimization algorithm aims to minimize the resources necessary to ensure the entirety of any given area is fully encompassed by whatever facility the user desires. Quantum optimization is the ideal way to accomplish this task as classical optimizers are unable to provide as efficient of a solution due to the risk of getting trapped in local minima and the significantly weaker processing ability. The poorer performance of the classical optimizer is demonstrated in our results.
 
-## Objectives
+### Objectives
 This project aims to implement and extend the work done in [*Efficient Light Source Placement Using Quantum Computing*](https://doi.org/10.48550/arXiv.2312.01156). The paper uses Quadratic Unconstrained Binary Optimization (QUBO) with Quantum Annealers to optimize the placement of light sources in a grid-like environment, in this case the game Minecraft is tested. The paper's results suggest practical results outside the video game.
 
 Our primary objective is to release an open-source implementation of the methods used to optimize the placement of nodes or points of interest. This project aims to recreate the functionality of the original code, making it freely available for experimentation. While the previous work was designed to run on a Quantum Annealer provided by D-Wave and did not include publicly available code, our implementation offers a more accessible version of the outlined computing techniques.
@@ -25,7 +32,18 @@ Moreover, a web app is currently in development to simplify the usability of the
 [comment]: <> (TODO: Quantum Advantage: Explain why quantum machine learning is a suitable or advantageous approach for this problem.) 
 
 ## Methods
-### Implementation
+
+### Algorithm 
+The code creates a 2D matrix filled with 0s and places nodes with an optional radius and distance metric to generate the input matrix D as described above. A constraint function c(x,z) and the function we are seeking to optimize L(x, z, λ, μ) are defined as determined prior. Parameters are initialized and used to set up the ADMM optimizer with a quantum approximate optimization algorithm that can be substituted for an actual quantum computer backend. 
+
+We then loop through the using an algorithm to update the quantum problem each iteration based on update criteria described in the paper. The linear and quadratic terms are isolated to define the quadratic program to be optimized.
+
+[comment]: <> (*Describe how z* is updated*)
+[comment]: <> (*Describe how lambda is updated*)
+[comment]: <> (*Describe how mu is updated* )
+
+A result is printed with each iteration and a final result is printed after k loops as specified by the user. The output is a binary matrix that dictates where light sources should be placed with 1 and empty locations with 0. The optimization algorithm seeks to cover the entire area with the fewest light sources possible. 
+
 Our implementation follows a similar methodology to the paper.
 The problem can be defined as the QUBO formulation:
 
@@ -80,9 +98,28 @@ Such that $\rho \ge 1$ is a fixed learning rate. A quantum computer is used in o
 [comment]: <> (TODO: add argument handling?)
 [comment]: <> (TODO: containerize so it can be run from source)
 
-### Circuit Explanation
+### Circuit
 
-
+```
+        ┌───┐┌─────────────────────────────────────────────────────┐»
+   q_0: ┤ H ├┤0                                                    ├»
+        ├───┤│                                                     │»
+   q_1: ┤ H ├┤1 exp(-it (IIZ + IZI + ZII + IZZ + ZIZ + ZZI))(γ[0]) ├»
+        ├───┤│                                                     │»
+   q_2: ┤ H ├┤2                                                    ├»
+        └───┘└─────────────────────────────────────────────────────┘»
+meas: 3/════════════════════════════════════════════════════════════»
+                                                                    »
+«        ┌───────────────────────────────────┐ ░ ┌─┐      
+«   q_0: ┤0                                  ├─░─┤M├──────
+«        │                                   │ ░ └╥┘┌─┐   
+«   q_1: ┤1 exp(-it (XII + IXI + IIX))(β[0]) ├─░──╫─┤M├───
+«        │                                   │ ░  ║ └╥┘┌─┐
+«   q_2: ┤2                                  ├─░──╫──╫─┤M├
+«        └───────────────────────────────────┘ ░  ║  ║ └╥┘
+«meas: 3/═════════════════════════════════════════╩══╩══╩═
+«                                                 0  1  2 
+```
 
 The circuit is made up of Hadamard gates applied on each qubit. Hadamard gates set a qubit into a superposition, essentially meaning that they have no definite value but instead must be “observed” to get the value, either a 0 or a 1. 
 
@@ -94,8 +131,8 @@ Finally, X rotations are applied to each qubit using an RX gate, which functions
 
 It appears that these rotations are finding what is the minimum energy level of the function, similar to how an annealer works. The Z rotations are the quadratic terms (when applied to a single qubit, these are when the quadratic term is the corresponding variable squared), and they are multiplied by a function of theta. When the value of that multiplication is minimal, then we get the most optimal values. Similarly, the X rotations are the linear terms. 
 
-
 ## Conclusion
+### Future Work
 
 [comment]: <> (TODO: Summary: Briefly summarize your project's key findings and their significance.)
 [comment]: <> (TODO: Discuss the potential broader impact of your work in the field of quantum machine learning.)
