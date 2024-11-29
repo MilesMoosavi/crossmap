@@ -51,7 +51,7 @@ This optimization problem particularly benefits from quantum computing approache
 ## Methods
 
 ### Algorithm 
-The code creates a 2D matrix filled with 0s and places nodes with an optional radius and distance metric to generate the input matrix D as described above. A constraint function c(x,z) and the function we are seeking to optimize L(x, z, λ, μ) are defined as determined prior. Parameters are initialized and used to set up the ADMM optimizer with a quantum approximate optimization algorithm that can be substituted for an actual quantum computer backend. 
+The code creates a 2D matrix filled with 0s and places nodes with an optional radius and distance metric to generate the input matrix D as described above. A constraint function $`c(x,z)`$ and the function we are seeking to optimize $`L(x, z, \lambda, \mu)`$ are defined as determined prior. Parameters are initialized and used to set up the ADMM optimizer with a quantum approximate optimization algorithm that can be substituted for an actual quantum computer backend. 
 
 We then loop through the using an algorithm to update the quantum problem each iteration based on update criteria described in the paper. The linear and quadratic terms are isolated to define the quadratic program to be optimized.
 
@@ -64,53 +64,54 @@ A result is printed with each iteration and a final result is printed after k lo
 Our implementation follows a similar methodology to the paper.
 The problem can be defined as the QUBO formulation:
 
-$$ 
+```math 
 \begin{align}
 & \min_{x\in \{0, 1 \}^n } && 1^\intercal x &&& \newline 
 & \text{subject to } &&  Dx - 1 - z, &&& z \in \mathbb{N}^n _0
 \end{align}
-$$
+```
 
-Such that $D\in\{0,1\}^{n\times{n}}$ with entry $d_{ij}$ representing if the location at $(i, j)$ is in range of the closest node, $x$ being a candidate solution, and $z$ being an auxillary vector.
+Such that $`D\in\{0,1\}^{n\times{n}}`$ with entry $`d_{ij}`$ representing if the location at $`(i, j)`$ is in range of the closest node, $`x`$ being a candidate solution, and $`z`$ being an auxillary vector.
 
 In order to use fewer qubits, the Alternating Direction Method of Multipliers (ADMM) is used to create a hybrid quantum-classical problem. The problem can be rewritten as
 
-$$ 
+```math
 \begin{align}
 & \min_{x\in \{0, 1 \}^n , z \in \mathbb{Z}^n} && 1^\intercal x + \gamma 1^\intercal \Theta (z )&&& \newline 
 & \text{subject to } &&  c(x, z) = 0 &&& 
 \end{align}
-$$
+```
 
-Such that $c(x, y) = Dx - 1 - z$, $\gamma > 0$, and $\Theta (z)$ representing a binary vector if $( \{z_0 < 0\}, ... , \{z_n < 0\} )$. This penalizes negative $z$ values, as from $(2)$  $z \in \mathbb{N}^n _0$.
+Such that $`c(x, y) = Dx - 1 - z$, $\gamma > 0`$, and $`\Theta (z)`$ representing a binary vector $`( \{z_0 < 0\}, ... , \{z_n < 0\} )`$. This penalizes negative $`z`$ values, as from equation $`(2)`$,  $`z \in \mathbb{N}^n _0`$.
 
 The augmented lagrangian can then be created as:
-$$
+
+```math
 \begin{align}
 L(x, z, \lambda, \mu) := 1^\intercal x + \gamma 1^\intercal \Theta (z) + \mathbb{\lambda}^\intercal c(x, z) + \frac{\mu}{2}\|c(x, z)\|^2
 \end{align}
-$$
+```
 
-Such that $\lambda$ and $\mu$ are coefficients and multipliers for the penalty terms. Thus we follow the algorithm:
+Such that $`\lambda`$ and $`\mu`$ are coefficients and multipliers for the penalty terms. Thus we follow the algorithm:
 
-$$
- \textbf{repeat} \newline 
-  x^* \leftarrow \mathbb{\argmin}_x L(x, z^*, \lambda^*, \mu^*) \newline
-  z^* \leftarrow \mathbb{\argmin}_z L(x^*, z, \lambda^*, \mu^*) \newline
-  \lambda^x \leftarrow \lambda^* + \mu^*c(x, z) \newline
- \mu_{k+1} \leftarrow 
+```math
+\displaylines{
+ \textbf{repeat}\\
+ x^* \leftarrow \mathbb{\text{arg min}} _x L(x, z^*, \lambda^*, \mu^*)\\
+ z^* \leftarrow \mathbb{\text{arg min}} _z L(x^*, z, \lambda^*, \mu^*)\\
+ \lambda^x \leftarrow \lambda^* + \mu^*c(x, z)\\
+ \mu_{k+1} \leftarrow
+
  \begin{cases}
- \rho \mu_k & \text{if} & \|c(x_k, z_k)\| > 10 \|D(z_k - z_{k+1})\| \newline
-  \frac{\mu_k}{\rho} & \text{if} &10 \|D(z_k - z_{k+1})\| >  \|c(x_k, z_k)\| \newline
-  \mu_k & \text{else}
- 
- \end{cases}
-
- \newline
+ \rho \mu_k & \text{if} & \|c(x_k, z_k)\| > 10 \|D(z_k - z_{k+1})\|\\
+\frac{\mu_k}{\rho} & \text{if} & 10 \|D(z_k - z_{k+1})\| >  \|c(x_k, z_k)\|\\
+\mu_k & \text{else}
+ \end{cases}\\
  \text{until convergence}
-$$
+}
+```
 
-Such that $\rho \ge 1$ is a fixed learning rate. A quantum computer is used in our implenentation when updating $x^*$. This implementation uses $\mu_0 = 1$ and $\rho = 1$.
+Such that $`\rho \ge 1`$ is a fixed learning rate. A quantum computer is used in our implementation when updating $`x^*`$. This implementation uses $`\mu_0 = 1`$ and $`\rho = 1`$.
 
 [comment]: <> (TODO: add argument handling?)
 [comment]: <> (TODO: containerize so it can be run from source)
